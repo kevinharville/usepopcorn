@@ -1,6 +1,4 @@
 import { useState } from "react";
-import { useEffect } from "react";
-import { KEY } from "./environment.js";
 
 const tempMovieData = [
   {
@@ -55,95 +53,28 @@ const average = (arr) =>
 export default function App() {
   const [movies, setMovies] = useState(tempMovieData);
   const [watched, setWatched] = useState(tempWatchedData);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
-  //const query = "unidenxxxxxxxxtified";
-  const [query, setQuery] = useState("");
-  const [query2, setQuery2] = useState("");
-  const [selectedId, setSelectedId] = useState(null); //tt6751668
-
-  useEffect(
-    function () {
-      //setQuery2({ query2 });
-      async function fetchMovies() {
-        try {
-          setIsLoading(true);
-          setError("");
-          const res = await fetch(
-            `http://www.omdbapi.com/?apikey=${KEY}&s=${query}`
-            //`http://www.omdbapi.com/?apikey=${KEY}&s=wars`
-          );
-          if (!res.ok)
-            throw new Error("Something went wrong with fetching movies");
-          //fetch(`http://www.omdbapi.com/?apikey=${KEY})&s=interstellar`)
-          //.then((res) => res.json())
-
-          const data = await res.json();
-          if (data.Response === "False") throw new Error("Movie not found");
-          setMovies(data.Search);
-          console.log(data.Search);
-          console.log(data.Search);
-          //setIsLoading(false);
-        } catch (err) {
-          console.error(err.message);
-          setError(err.message);
-        } finally {
-          //.then((data) => setMovies(data.Search));
-          setIsLoading(false);
-        }
-      }
-
-      if (query.length < 3) {
-        setMovies([]);
-        setError("");
-        return;
-      }
-      fetchMovies();
-    },
-    //[]
-    [query]
-  );
-
-  function handleQuery(search) {
-    console.log("hey " + search);
-    setQuery(search);
-  }
-
-  function handleSelectMovie(id) {
-    return;
-  }
 
   return (
     <>
       <NavBar>
         <Logo />
-        <Search movies={movies} query={query} handleQuery={handleQuery} />
+        <Search movies={movies} />
         <NumResults movies={movies} />
       </NavBar>
       <Main movies={movies}>
         <Box>
-          {isLoading && <Loader />}
-          {!isLoading && !error && (
-            <MovieList movies={movies} onSelectMovie={handleSelectMovie} />
-          )}
-          {error && <ErrorMessage message={error} />}
+          <Movies movies={movies} />
         </Box>
-        <Box>
-          {selectedId ? (
-            <SelectedMovie selectedId={selectedId} />
-          ) : (
+        <Box
+          element={
             <>
-              <MovieDetails selectedId={selectedId} movie={selectedId} />
-              xxx
-              <SelectedMovie selectedId={selectedId} />
-              zzz
-              <WatchedSummary watched={watched} />
-              <WatchedMoviesList watched={watched} />
-              xxx
-              <SelectedMovie selectedId={selectedId} />
-              zzz
+              <Summary watched={watched} />
             </>
-          )}
+          }
+        >
+          <Summary watched={watched} />
+          <Summary watched={watched} />
+          <WatchedMovies watched={watched} />
         </Box>
       </Main>
     </>
@@ -171,8 +102,8 @@ function NavBar({ children }) {
   return <nav className="nav-bar">{children}</nav>;
 }
 
-function Search({ movies, query, handleQuery }) {
-  //const [query, setQuery] = useState("");
+function Search({ movies }) {
+  const [query, setQuery] = useState("");
   return (
     <>
       <input
@@ -180,8 +111,7 @@ function Search({ movies, query, handleQuery }) {
         type="text"
         placeholder="Search movies..."
         value={query}
-        // onChange={(e) => setQuery(e.target.value)}
-        onChange={(e) => handleQuery(e.target.value)}
+        onChange={(e) => setQuery(e.target.value)}
       />
     </>
   );
@@ -204,44 +134,43 @@ function NumResults({ movies }) {
   );
 }
 
-function MovieList({ movies, onSelectMovie }) {
-  console.log({ movies });
+function Movies({ movies }) {
   return (
     <ul className="list">
       {movies?.map((movie) => (
-        <MovieDetails2 movie={movie} key={movie.imdbID} />
+        <Movie movie={movie} key={movie.imdbID} />
       ))}
     </ul>
   );
 }
 
-function WatchedMoviesList({ watched }) {
+function WatchedMovies({ watched }) {
   return (
     <ul className="list">
       {watched.map((movie) => (
-        <MovieDetails movie={movie} key={movie.imdbID} />
+        <WatchedMovie movie={movie} key={movie.imdbID} />
       ))}
     </ul>
   );
 }
 
-// function Movie({ movie }) {
-//   console.log("my key is " + movie.imdbID);
-//   return (
-//     <li key={movie.imdbID}>
-//       <img src={movie.Poster} alt={`${movie.Title} poster`} />
-//       <h3>{movie.Title}</h3>
-//       <div>
-//         <p>
-//           <span>🗓</span>
-//           <span>{movie.Year}</span>
-//         </p>
-//       </div>
-//     </li>
-//   );
-// }
+function Movie({ movie }) {
+  console.log("my key is " + movie.imdbID);
+  return (
+    <li key={movie.imdbID}>
+      <img src={movie.Poster} alt={`${movie.Title} poster`} />
+      <h3>{movie.Title}</h3>
+      <div>
+        <p>
+          <span>🗓</span>
+          <span>{movie.Year}</span>
+        </p>
+      </div>
+    </li>
+  );
+}
 
-function WatchedSummary({ watched }) {
+function Summary({ watched }) {
   const avgImdbRating = average(watched.map((movie) => movie.imdbRating));
   const avgUserRating = average(watched.map((movie) => movie.userRating));
   const avgRuntime = average(watched.map((movie) => movie.runtime));
@@ -270,15 +199,9 @@ function WatchedSummary({ watched }) {
     </div>
   );
 }
-function MovieDetails({ selectedId }) {
-  return <h1>Movie Details</h1>;
-}
 
-function MovieDetails2({ selectedId, movie }) {
-  // if (!movie.imdbID) console.log("NO NO NBO");
+function WatchedMovie({ movie }) {
   console.log("my key is " + movie.imdbID);
-  console.log({ movie });
-  //return <h1>HELLO</h1>;
   return (
     <li key={movie.imdbID}>
       <img src={movie.Poster} alt={`${movie.Title} poster`} />
@@ -299,16 +222,4 @@ function MovieDetails2({ selectedId, movie }) {
       </div>
     </li>
   );
-}
-
-function Loader() {
-  return <p className="loader">LOADING....</p>;
-}
-
-function ErrorMessage({ message }) {
-  return <p className="error">👹 {message}</p>;
-}
-
-function SelectedMovie({ selectedId }) {
-  return <div className="details">{selectedId}</div>;
 }
