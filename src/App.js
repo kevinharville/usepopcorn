@@ -68,7 +68,12 @@ export default function App() {
   }
 
   function handleCloseMovie() {
+    alert("howdy");
     setSelectedId(null);
+  }
+
+  function handleAddWatched(movie) {
+    setWatched((watched) => [...watched, movie]);
   }
 
   useEffect(
@@ -92,7 +97,7 @@ export default function App() {
           setMovies(data.Search);
           console.log(data.Search);
           console.log(data.Search);
-          //setIsLoading(false);
+          setIsLoading(false);
         } catch (err) {
           console.error(err.message);
           setError(err.message);
@@ -135,11 +140,15 @@ export default function App() {
               onCloseMovie={handleCloseMovie}
             />
           )}
-          {error && <ErrorMessage message={error} />}
+          {error && <ErrorMessage message="hello: {error}" />}
         </Box>
         <Box>
           {selectedId ? (
-            <MovieDetails selectedId={selectedId} />
+            <MovieDetails
+              selectedId={selectedId}
+              setError={setError}
+              onAddWatched={handleAddWatched}
+            />
           ) : (
             <>
               <WatchedSummary watched={watched} />
@@ -226,12 +235,41 @@ function WatchedMoviesList({ watched }) {
   return (
     <ul className="list">
       {watched.map((movie) => (
-        <MovieDetails movie={movie} key={movie.imdbID} />
+        <WatchedMovie movie={movie} key={movie.imdbID} />
       ))}
     </ul>
   );
 }
 
+function WatchedMovie({ movie, onDeleteWatched }) {
+  return (
+    <li>
+      <img src={movie.poster} alt={`${movie.title} poster`} />
+      <h3>{movie.title}</h3>
+      <div>
+        <p>
+          <span>⭐️</span>
+          <span>{movie.imdbRating}</span>
+        </p>
+        <p>
+          <span>🌟</span>
+          <span>{movie.userRating}</span>
+        </p>
+        <p>
+          <span>⏳</span>
+          <span>{movie.runtime} min</span>
+        </p>
+
+        <button
+          className="btn-delete"
+          onClick={() => onDeleteWatched(movie.imdbID)}
+        >
+          X
+        </button>
+      </div>
+    </li>
+  );
+}
 function Movie({ movie, onSelectMovie }) {
   console.log("my key is " + movie.imdbID);
   return (
@@ -277,7 +315,7 @@ function WatchedSummary({ watched }) {
     </div>
   );
 }
-function MovieDetails({ selectedId, onCloseMovie }) {
+function MovieDetails({ selectedId, onCloseMovie, setError, onAddWatched }) {
   const [movie, setMovie] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   //alert("details");
@@ -295,24 +333,33 @@ function MovieDetails({ selectedId, onCloseMovie }) {
   } = movie;
 
   console.log(title, year, poster);
-
+  function handleAdd() {
+    console.log("all sorts of stuff");
+  }
   useEffect(
     function () {
       async function getMovieDetails() {
-        console.log("getMovieDetails");
-        setIsLoading(true);
-        const res = await fetch(
-          `http://www.omdbapi.com/?apikey=${KEY}&i=${selectedId}`
-          //`http://www.omdbapi.com/?apikey=${KEY}&s=wars`
-        );
-        const data = await res.json();
-        setMovie(data);
-        console.log(data);
-        setIsLoading(false);
+        try {
+          console.log("getMovieDetails");
+          setIsLoading(true);
+          const res = await fetch(
+            `http://www.omdbapi.com/?apikey=${KEY}&i=${selectedId}`
+            //`http://www.omdbapi.com/?apikey=${KEY}&s=wars`
+          );
+          const data = await res.json();
+          setMovie(data);
+          console.log(data);
+          setIsLoading(false);
+        } catch (err) {
+          //setError(err.message);
+          setError(err.message);
+        } finally {
+          //alert("finally");
+        }
       }
       getMovieDetails();
     },
-    [selectedId]
+    [selectedId, setError]
   );
 
   return (
@@ -341,6 +388,9 @@ function MovieDetails({ selectedId, onCloseMovie }) {
           </header>
           <div className="rating">
             <StarRating maxRating={10} size={24} />
+            <button className="btn-add" onClick={handleAdd}>
+              + Add to list
+            </button>
           </div>
           <section>
             <p>
@@ -352,33 +402,6 @@ function MovieDetails({ selectedId, onCloseMovie }) {
         </>
       )}
     </div>
-  );
-}
-
-function MovieDetails2({ selectedId, movie }) {
-  // if (!movie.imdbID) console.log("NO NO NBO");
-  console.log("my key is " + movie.imdbID);
-  //console.log({ movie });
-  //return <h1>HELLO</h1>;
-  return (
-    <li key={movie.imdbID}>
-      <img src={movie.Poster} alt={`${movie.Title} poster`} />
-      <h3>{movie.Title}</h3>
-      <div>
-        <p>
-          <span>⭐️</span>
-          <span>{movie.imdbRating}</span>
-        </p>
-        <p>
-          <span>🌟</span>
-          <span>{movie.userRating}</span>
-        </p>
-        <p>
-          <span>⏳</span>
-          <span>{movie.runtime} min</span>
-        </p>
-      </div>
-    </li>
   );
 }
 
